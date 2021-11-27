@@ -1,2 +1,2 @@
 # quant
-First project pblished to GitHUb. 
+First project published to GitHUb. 
