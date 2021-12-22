@@ -1,6 +1,8 @@
 import json
 import requests
-
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 # Returns the most recent transactions by U.S. Representatives
 routes = {
     'house' : "https://api.quiverquant.com/beta/live/housetrading",
@@ -20,7 +22,6 @@ routes = {
     'congress_ticker' : "https://api.quiverquant.com/beta/historical/congresstrading/{ticker}"
           }
 
-cache = []
 
 class GetData():
 
@@ -30,26 +31,79 @@ class GetData():
         self.url = None
 
     def get(self, sector):
-        global cache
         self.sector = sector
         self.url = routes[sector]
         headers = {'accept': 'application/json',
                    'X-CSRFToken': 'TyTJwjuEC7VV7mOqZ622haRaaUr0x0Ng4nrwSRFKQs7vdoBcJlK9qjAS69ghzhFu',
                    'Authorization': 'Token a786b7e71b07abce63986c770094c20f9809c12b'}
         r = requests.get(self.url, headers=headers)
-        result = json.loads(r.content)
-        #print(type(result))
-        if result:
-            self.data.append(result)
-            if result not in cache: #cut down on duplicates
-                cache.append(result)
+        self.data.append(json.loads(r.content))
         return self.data
+        
+               
     
 x = GetData()
+
+
 house_info = x.get('house')
 congress_info = x.get('congress')
 senate_info = x.get('senate')
-#print(type(senate_info))
-#print(type(cache))
-for dict in cache:
-    for ticker in dict:
+contracts = x.get('contracts')
+quarterly_contracts = x.get('quarterly_contracts')
+corp_lobbying = x.get('corp_lobbying')
+off_exchange = x.get('off_exchange')
+congress_ticker = x.get('congress_ticker')
+
+all_data_raw = house_info + congress_info + senate_info + contracts + quarterly_contracts + corp_lobbying
+all_data = list(filter(None, all_data_raw))
+
+def count_tickers(data):
+    clean_data = []
+    dict_count = 0
+    other_count  = 0
+    data_types = []
+    ticker_list = []
+    
+    
+    for i in data:
+        for j in i:
+            clean_data.append(j)
+    
+    for i in clean_data:
+        if isinstance(i, dict):
+            dict_count += 1
+        else:
+            other_count += 1
+    
+    if other_count > 0:
+        raise Exception('All of the data is not in a dictionary!',
+                        'The total dictionary count is: ' + str(dict_count),
+                        'The other data types are: ' + str(data_types))
+    else:
+        for i in clean_data:
+            ticker_list.append(i['Ticker'])
+        
+        ticker_count = {ticker: 0 for ticker in ticker_list}    
+        for i in ticker_list:
+            if i in ticker_list:
+                ticker_count[i] += 1
+    #pprint(ticker_count)
+    #print('The toal dictionary count is: ' + str(dict_count))
+    #print('The other data type count is: ' + str(other_count))
+    return ticker_count
+         
+organized_data = count_tickers(all_data)
+
+def find_top_ten_traded(data):
+    sorted_data = dict(sorted(data.items(), key=lambda item: item[1], reverse=True))
+    top_ten = (dict(list(sorted_data.items())[:10]))
+    return top_ten
+    
+bar_sample = find_top_ten_traded(organized_data)
+
+keys = bar_sample.keys()
+values = bar_sample.values()
+
+plt.bar(keys, values)
+plt.show()
+    
