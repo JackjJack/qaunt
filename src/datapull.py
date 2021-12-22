@@ -35,7 +35,7 @@ class GetData():
         self.url = routes[sector]
         headers = {'accept': 'application/json',
                    'X-CSRFToken': 'TyTJwjuEC7VV7mOqZ622haRaaUr0x0Ng4nrwSRFKQs7vdoBcJlK9qjAS69ghzhFu',
-                   'Authorization': 'Token a786b7e71b07abce63986c770094c20f9809c12b'}
+                   'Authorization': 'api.quiverwuant.com'}
         r = requests.get(self.url, headers=headers)
         self.data.append(json.loads(r.content))
         return self.data
